@@ -1,0 +1,36 @@
+name: 保持活跃 (Keepalive)
+
+# ============================================
+# 触发条件
+# ============================================
+on:
+  schedule:
+    # 每月 1 号和 15 号的北京时间中午 12:30 (UTC 04:30) 执行
+    # 频率无需太高，足以重置 60 天倒计时即可
+    - cron: '30 4 1,15 * *'
+  workflow_dispatch:
+
+# ============================================
+# 任务
+# ============================================
+jobs:
+  keep-active:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 必须保留：赋予 GITHUB_TOKEN 代码推送权限
+      
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 原生 Git 提交保活 (Native Keepalive)
+        run: |
+          # 1. 显式配置机器人账户身份
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 2. 强制生成一条不包含任何文件更改的“空提交”
+          git commit --allow-empty -m "chore: native auto keepalive to prevent workflow suspension"
+          
+          # 3. 将空提交推送至当前仓库
+          git push
